@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<title>Phase 2 - 3dscene</title>
+	<meta charset="utf-8">
+</head>
+<body>
+<script src="js/Three.min.js"></script>
+<script src="js/Three.js"></script>
+
+<script src="js/AssimpJSONLoader.js"></script>
+<script src="js/OrbitControls.js"></script>
+
+
+<script src="js/THREEx.FullScreen.js"></script>
+<script src="js/THREEx.WindowResize.js"></script>
+
+
+<!-- ------------------------------------------------------------ -->
+
+<div id="canvas" style="position: absolute; left:0px; top:0px;"></div>
+<script>
+
+var container, scene, camera, renderer, controls, stats;
+
+var mirrorCube, mirrorCubeCamera;
+var mirrorSphere, mirrorSphereCamera;
+
+init();
+animate();
+		
+function init() 
+{
+
+	scene = new THREE.Scene();
+
+	var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+	scene.add(camera);
+	camera.position.set(0,150,400);
+	camera.lookAt(scene.position);	
+
+	renderer = new THREE.WebGLRenderer( {antialias:true} );
+	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+	container = document.getElementById( 'canvas' );
+	container.appendChild( renderer.domElement );
+
+	THREEx.WindowResize(renderer, camera);
+	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
+
+	controls = new THREE.OrbitControls( camera, renderer.domElement );
+
+/*	stats = new Stats();
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.bottom = '0px';
+	stats.domElement.style.zIndex = 100;
+	container.appendChild( stats.domElement );
+*/
+	var light = new THREE.PointLight(0xffffff);
+	light.position.set(0,250,0);
+	scene.add(light);
+		
+
+	var materialArray = [];
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'files/images/1.jpg' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'files/images/1.jpg' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'files/images/2.jpg' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'files/images/3.jpg' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'files/images/4.jpg' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'files/images/5.jpg' ) }));
+	for (var i = 0; i < 6; i++)
+	   materialArray[i].side = THREE.BackSide;
+	var skyboxMaterial = new THREE.MeshFaceMaterial( materialArray );
+	var skyboxGeom = new THREE.BoxGeometry( 5000, 5000, 5000, 1, 1, 1 );
+	var skybox = new THREE.Mesh( skyboxGeom, skyboxMaterial );
+	scene.add( skybox );	
+	
+	var loader1 = new THREE.AssimpJSONLoader();
+			loader1.load( 'files/VPGerberaVaseA.json', function ( assimpjson ) {
+			
+				assimpjson.scale.x = assimpjson.scale.y = assimpjson.scale.z = 10;
+				assimpjson.position.x=0;
+				assimpjson.position.y=0;
+				assimpjson.position.z=1000;
+				assimpjson.updateMatrix();
+
+				scene.add(assimpjson);
+			} );
+			
+	var loader2 = new THREE.AssimpJSONLoader();
+			loader2.load( 'files/Flowerpot2.json', function ( assimpjson ) {
+			
+				assimpjson.scale.x = assimpjson.scale.y = assimpjson.scale.z = 1000;
+				assimpjson.position.x=0;
+				assimpjson.position.y=0;
+				assimpjson.position.z=-1000;
+				assimpjson.updateMatrix();
+
+				scene.add(assimpjson);
+			} );
+
+
+	var cube = new THREE.Mesh(new THREE.BoxGeometry(1000, 1000, 1000), new THREE.MeshNormalMaterial());
+      	cube.position.set(-2000,-2000,-1800);
+	cube.overdraw = true;
+      	scene.add(cube);
+
+	var cube2 = new THREE.Mesh(new THREE.BoxGeometry(500, 500, 1000), new THREE.MeshNormalMaterial());
+      	cube2.position.set(-1250,-2250,-1800);
+	cube2.overdraw = true;
+      	scene.add(cube2);
+
+	var cubeGeom = new THREE.BoxGeometry(1000, 1000, 10, 1, 1, 1);
+	mirrorCubeCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
+	scene.add( mirrorCubeCamera );
+	var mirrorCubeMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorCubeCamera.renderTarget } );
+	mirrorCube = new THREE.Mesh( cubeGeom, mirrorCubeMaterial );
+	mirrorCube.position.set(-75,0,2470);
+	mirrorCubeCamera.position = mirrorCube.position;
+	scene.add(mirrorCube);	
+
+	
+	var bolt  = new THREE.Mesh(new THREE.SphereGeometry(25, 32, 16), new THREE.MeshBasicMaterial( { color: 0x808080 } ));
+      	bolt.position.set(420,495,2470);
+	bolt.overdraw = false;
+      	scene.add(bolt);
+	
+	var bolt1  = new THREE.Mesh(new THREE.SphereGeometry(25, 32, 16), new THREE.MeshBasicMaterial( { color: 0x808080 } ));
+      	bolt1.position.set(-580,495,2470);
+	bolt1.overdraw = false;
+      	scene.add(bolt1);
+
+
+	var bolt2  = new THREE.Mesh(new THREE.SphereGeometry(25, 32, 16), new THREE.MeshBasicMaterial( { color: 0x808080 } ));
+      	bolt2.position.set(420,-505,2470);
+	bolt2.overdraw = false;
+      	scene.add(bolt2);
+
+	var bolt3  = new THREE.Mesh(new THREE.SphereGeometry(25, 32, 16), new THREE.MeshBasicMaterial( { color: 0x808080 } ));
+      	bolt3.position.set(-580,-505,2470);
+	bolt3.overdraw = false;
+      	scene.add(bolt3);
+
+	var sphereGeom =  new THREE.SphereGeometry( 300, 32, 16 );
+	mirrorSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
+	scene.add( mirrorSphereCamera );
+	var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+	mirrorSphere = new THREE.Mesh( sphereGeom, mirrorSphereMaterial );
+	mirrorSphere.position.set(-2000,-1250,-1800);
+	mirrorSphereCamera.position = mirrorSphere.position;
+	scene.add(mirrorSphere);
+	
+	var sphereGeom1 =  new THREE.SphereGeometry( 200, 32, 16 );
+	scene.add( mirrorSphereCamera );
+	var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+	mirrorSphere = new THREE.Mesh( sphereGeom1, mirrorSphereMaterial );
+	mirrorSphere.position.set(-1250,-1850,-1800);
+	mirrorSphereCamera.position = mirrorSphere.position;
+	scene.add(mirrorSphere);
+	
+	var sphereGeom2 =  new THREE.SphereGeometry( 100, 32, 16 );
+	scene.add( mirrorSphereCamera );
+	var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+	mirrorSphere = new THREE.Mesh( sphereGeom2, mirrorSphereMaterial );
+	mirrorSphere.position.set(-1250,-1900,-1450);
+	mirrorSphereCamera.position = mirrorSphere.position;
+	scene.add(mirrorSphere);
+	
+	var sphereGeom3 =  new THREE.SphereGeometry( 100, 32, 16 );
+	scene.add( mirrorSphereCamera );
+	var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+	mirrorSphere = new THREE.Mesh( sphereGeom3, mirrorSphereMaterial );
+	mirrorSphere.position.set(-1250,-1900,-2150);
+	mirrorSphereCamera.position = mirrorSphere.position;
+	scene.add(mirrorSphere);
+	
+	var sphereGeom4 =  new THREE.SphereGeometry( 50, 32, 16 );
+	scene.add( mirrorSphereCamera );
+	var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+	mirrorSphere = new THREE.Mesh( sphereGeom1, mirrorSphereMaterial );
+	mirrorSphere.position.set(200,-20,0);
+	mirrorSphereCamera.position = mirrorSphere.position;
+	scene.add(mirrorSphere);
+
+}
+
+function animate() 
+{
+    requestAnimationFrame( animate );
+	render();		
+	update();
+}
+
+function update()
+{
+	controls.update();
+}
+
+function render() 
+{
+	mirrorCube.visible = false;
+	mirrorCubeCamera.updateCubeMap( renderer, scene );
+	mirrorCube.visible = true;
+
+	mirrorSphere.visible = false;
+	mirrorSphereCamera.updateCubeMap( renderer, scene );
+	mirrorSphere.visible = true;
+	
+	renderer.render( scene, camera );
+	//mirrorCubeCamera.x=mirrorCubeCamera.x+5000;
+	//mirrorCubeCamera.y=mirrorCubeCamera.y+5000;
+	//mirrorCubeCamera.y=mirrorCubeCamera.z+5000;
+}
+
+</script>
+
+</body>
+</html>
